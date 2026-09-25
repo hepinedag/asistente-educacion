@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block titulo %}Entornos{% endblock %}
+
+{% block contenido %}
+<h1>Entornos</h1>
+<p class="entradilla">
+  El entorno se crea <em>para</em> un docente. El administrador no queda
+  enganchado a él: su acceso es transversal por rol.
+</p>
+
+{% if sin_base %}
+<div class="aviso error">
+  <p><strong>No hay conexión con la base de datos.</strong> Sin ella no se pueden
+  administrar entornos. Levante los servicios y vuelva a entrar.</p>
+  <ul class="detalle"><li>{{ sin_base }}</li></ul>
+</div>
+{% else %}
+<div class="acciones">
+  <button type="button" class="abre" data-panel="crear">Crear entorno</button>
+</div>
+
+<form class="panel" id="crear" method="post" action="/entornos/crear" hidden>
+  <h2>Crear un entorno para un docente</h2>
+  {% if docentes %}
+  <div class="campos">
+    <label>Docente responsable
+      <select name="docente" required>
+        <option value="">— elija un docente —</option>
+        {% for d in docentes %}
+        <option value="{{ d.id }}">{{ d.email }} — {{ d.nombre }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Nombre del entorno
+      <input type="text" name="nombre" required>
+    </label>
+    <label>Área de conocimiento
+      <input type="text" name="area">
+    </label>
+    <label>Nivel educativo
+      <input type="text" name="nivel">
+    </label>
+    <label class="ancho">Descripción
+      <input type="text" name="descripcion">
+    </label>
+  </div>
+  <div class="pie">
+    <button type="submit">Crear</button>
+    <button type="button" class="cierra secundario">Cancelar</button>
+  </div>
+  {% else %}
+  <p class="error">
+    No hay ninguna cuenta de docente. Cree primero una en Cuentas.
+  </p>
+  <div class="pie"><button type="button" class="cierra secundario">Cerrar</button></div>
+  {% endif %}
+</form>
+
+{% if entornos %}
+<table class="listado">
+  <thead>
+    <tr>
+      <th>Entorno</th><th>Docente</th><th class="numero">Doc.</th>
+      <th class="numero">Estud.</th><th>Identificador</th><th></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for e in entornos %}
+    <tr>
+      <td><strong>{{ e.nombre }}</strong><br><span class="menudo">{{ e.estado }}</span></td>
+      <td>{{ e.docente }}</td>
+      <td class="numero">{{ e.documentos }}</td>
+      <td class="numero">{{ e.estudiantes }}</td>
+      <td>
+        <code id="id-{{ loop.index }}" class="identificador">{{ e.id }}</code>
+        <button type="button" class="copiar menudo" data-copia="id-{{ loop.index }}">Copiar</button>
+      </td>
+      <td class="derecha">
+        <button type="button" class="menudo abre" data-panel="reasignar-{{ loop.index }}">Reasignar</button>
+      </td>
+    </tr>
+    <tr class="panel-fila" id="reasignar-{{ loop.index }}" hidden>
+      <td colspan="6">
+        <form method="post" action="/entornos/reasignar" class="enfila">
+          <input type="hidden" name="entorno" value="{{ e.id }}">
+          <span>Nuevo docente de <strong>{{ e.nombre }}</strong>:</span>
+          <label>
+            <select name="docente" required>
+              <option value="">— elija —</option>
+              {% for d in docentes %}
+              <option value="{{ d.id }}">{{ d.email }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label class="casilla">
+            <input type="checkbox" name="liberar" value="si" checked>
+            retirar el entorno al docente anterior
+          </label>
+          <button type="submit" class="menudo">Reasignar</button>
+          <button type="button" class="menudo secundario cierra">Cancelar</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="nota">
+  El identificador es la referencia del administrador. El alta de estudiantes en
+  un entorno se hace desde Cuentas, sin teclearlo.
+</p>
+{% else %}
+<p class="vacio">Todavía no hay entornos.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

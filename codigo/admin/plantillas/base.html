@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}Administración{% endblock %} · Asistente de Educación</title>
+<link rel="stylesheet" href="/estaticos/estilos.css">
+</head>
+<body>
+
+<nav class="barra">
+  <div class="marca">
+    <strong>Administración</strong>
+    <span>Asistente de Educación</span>
+  </div>
+
+  <ul class="destinos">
+    <li><a href="/"              class="{{ 'aqui' if seccion == 'inicio' }}">Inicio</a></li>
+    <li><a href="/cuentas"       class="{{ 'aqui' if seccion == 'cuentas' }}">Cuentas</a></li>
+    <li><a href="/entornos"      class="{{ 'aqui' if seccion == 'entornos' }}">Entornos</a></li>
+    <li><a href="/configuracion" class="{{ 'aqui' if seccion == 'configuracion' }}">Configuración</a></li>
+    <li><a href="/operacion"     class="{{ 'aqui' if seccion == 'operacion' }}">Operación</a></li>
+    <li><a href="/registro"      class="{{ 'aqui' if seccion == 'registro' }}">Registro</a></li>
+  </ul>
+
+  <div class="semaforos">
+    <div class="luz {{ 'bien' if semaforo.base_ok else 'mal' }}"
+         title="{{ semaforo.base_motivo or 'Base de datos accesible' }}">
+      <span class="punto"></span>base de datos
+    </div>
+    <div class="luz {{ 'bien' if semaforo.docker_ok else 'mal' }}"
+         title="{{ semaforo.docker_detalle }}">
+      <span class="punto"></span>docker
+    </div>
+    <form method="post" action="/salir"><button class="salir">Cerrar sesión</button></form>
+  </div>
+</nav>
+
+<main class="trabajo">
+  {% if aviso %}
+  <div class="aviso {{ aviso.tipo }}">
+    <p>{{ aviso.texto }}</p>
+
+    {% if aviso.clave %}
+    <div class="credencial">
+      <span class="etiqueta">Contraseña generada</span>
+      <code id="clave">{{ aviso.clave }}</code>
+      <button type="button" class="copiar" data-copia="clave">Copiar</button>
+      <p class="nota">Anótela ahora: no se guarda en ningún registro y no se vuelve a mostrar.</p>
+    </div>
+    {% endif %}
+
+    {% if aviso.detalle %}
+    <ul class="detalle">
+      {% for linea in aviso.detalle %}<li>{{ linea }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if aviso.accion %}
+    <form method="post" action="{{ aviso.accion.url }}" class="encadenada">
+      {% for campo, valor in aviso.accion.campos.items() %}
+      <input type="hidden" name="{{ campo }}" value="{{ valor }}">
+      {% endfor %}
+      <button type="submit" data-lento>{{ aviso.accion.texto }}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% block contenido %}{% endblock %}
+</main>
+
+<script src="/estaticos/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# --- secretos: NO deben entrar nunca al repositorio ---
+config/.env
+codigo/frontend/.env
+codigo/admin/.acceso
+
+# --- entornos y dependencias: se regeneran con pip install / npm install ---
+venv/
+__pycache__/
+*.pyc
+**/node_modules/
+dist/
+.vite/
+
+# --- corpus y datos: material de terceros y datos de la instalacion ---
+corpus/fuente/
+corpus/procesado/
+*.dump

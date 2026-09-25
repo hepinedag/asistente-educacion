@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block titulo %}Inicio{% endblock %}
+
+{% block contenido %}
+<h1>Inicio</h1>
+<p class="entradilla">El estado de la instalación en una sola vista.</p>
+
+<section class="bloque">
+  <h2>Modo de operación</h2>
+  {% if modo.activo %}
+  <p><strong class="verde">Modo {{ modo.activo|upper }}</strong> —
+    modelo de lenguaje <code>{{ modo.modelo_llm }}</code>,
+    embeddings <code>{{ modo.modelo_embeddings }}</code>.</p>
+  {% else %}
+  <p><strong class="rojo">La configuración dice modo {{ modo.escrito|upper }}, pero no está corriendo así.</strong></p>
+  <ul class="detalle">
+    {% for p in modo.pendientes %}<li>{{ p }}</li>{% endfor %}
+  </ul>
+  {% endif %}
+  <p class="nota">Se cambia desde Operación → Cambiar de modo.</p>
+</section>
+
+<section class="cifras">
+  {% if recuento.error %}
+    <p class="error">No se pudo consultar la base: {{ recuento.error }}</p>
+  {% else %}
+    <div class="cifra"><b>{{ recuento.docentes }}</b><span>docentes</span></div>
+    <div class="cifra"><b>{{ recuento.administradores }}</b><span>administradores</span></div>
+    <div class="cifra"><b>{{ recuento.estudiantes }}</b><span>estudiantes</span></div>
+    <div class="cifra"><b>{{ recuento.entornos }}</b><span>entornos</span></div>
+    <div class="cifra"><b>{{ recuento.documentos }}</b><span>documentos</span></div>
+  {% endif %}
+</section>
+
+<div class="columnas">
+  <section class="bloque">
+    <h2>Contenedores</h2>
+    {% if problemas %}
+      <p class="error">{{ problemas|join(' · ') }}</p>
+    {% endif %}
+    {% if servicios %}
+      <table class="compacta">
+        <tbody>
+        {% for nombre, estado in servicios %}
+          <tr>
+            <td><code>{{ nombre }}</code></td>
+            <td class="{{ 'verde' if 'running' in estado|lower else 'rojo' }}">{{ estado }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    {% elif not problemas %}
+      <p class="vacio">No hay contenedores levantados.</p>
+    {% endif %}
+    <p class="nota">Arrancar, detener y cambiar de modo se hace desde Operación.</p>
+  </section>
+
+  <section class="bloque">
+    <h2>Salud</h2>
+    <table class="compacta">
+      <tbody>
+      {% for ruta, codigo, cuerpo in salud %}
+        <tr>
+          <td><code>{{ ruta }}</code></td>
+          <td class="{{ 'verde' if codigo == 200 else 'rojo' }}">
+            {{ codigo if codigo else 'sin respuesta' }}
+          </td>
+          <td class="menudo">{{ cuerpo }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+<section class="bloque">
+  <h2>Últimas operaciones</h2>
+  {% if ultimas %}
+    <table class="compacta">
+      <tbody>
+      {% for linea in ultimas %}
+        <tr>
+          <td class="menudo">{{ linea.fecha.replace('T', ' ') }}</td>
+          <td><code>{{ linea.accion }}</code></td>
+          <td class="menudo">{{ linea.detalle }}</td>
+          <td class="{{ 'verde' if linea.resultado == 'ok' else 'rojo' }}">{{ linea.resultado }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="vacio">Todavía no hay operaciones registradas.</p>
+  {% endif %}
+</section>
+{% endblock %}

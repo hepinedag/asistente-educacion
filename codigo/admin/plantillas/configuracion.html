@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block titulo %}Configuración{% endblock %}
+
+{% block contenido %}
+<h1>Configuración</h1>
+<p class="entradilla">
+  Lo que el sistema lee de <code>config/.env</code>. Cada cambio hace copia antes
+  de tocar nada, y lo que arrastra se ofrece aquí mismo.
+</p>
+
+{% if problema %}
+<div class="aviso error"><p>No se pudo leer la configuración: {{ problema }}</p></div>
+{% else %}
+
+<section class="bloque">
+  <h2>Modo de operación</h2>
+  <p class="nota" style="margin-top:0">
+    Los valores admitidos salen del código del sistema, no se teclean.
+  </p>
+  {% for clave, valor, opciones in modo %}
+  <form method="post" action="/configuracion/valor" class="enfila">
+    <input type="hidden" name="clave" value="{{ clave }}">
+    <label style="min-width:230px"><code>{{ clave }}</code>
+      <select name="valor">
+        {% for o in opciones %}
+        <option value="{{ o }}" {{ 'selected' if o == valor }}>{{ o }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="menudo" data-lento>Guardar</button>
+    {% if clave.startswith('EMBEDDING') %}
+    <span class="menudo aviso-inline">cambiarlo invalida el índice</span>
+    {% endif %}
+  </form>
+  {% endfor %}
+</section>
+
+<section class="bloque">
+  <h2>Parámetros</h2>
+  {% for clave, valor in parametros %}
+  <form method="post" action="/configuracion/valor" class="enfila">
+    <input type="hidden" name="clave" value="{{ clave }}">
+    <label style="flex:1; min-width:300px"><code>{{ clave }}</code>
+      <input type="text" name="valor" value="{{ valor }}">
+    </label>
+    <button type="submit" class="menudo" data-lento>Guardar</button>
+  </form>
+  {% endfor %}
+</section>
+
+<section class="bloque">
+  <h2>Conexiones con credencial</h2>
+  <p class="nota" style="margin-top:0">
+    Llevan una contraseña dentro de la propia cadena. Se muestra el host, el
+    puerto y la base —que es lo que hay que poder leer— y se tapa la credencial.
+    Para cambiarla hay que escribir la cadena completa.
+  </p>
+  {% for clave, enmascarada in conexiones %}
+  <form method="post" action="/configuracion/valor" class="enfila">
+    <input type="hidden" name="clave" value="{{ clave }}">
+    <label style="min-width:300px"><code>{{ clave }}</code>
+      <span class="valor-oculto">{{ enmascarada }}</span>
+    </label>
+    <label style="flex:1; min-width:260px">cadena nueva completa
+      <input type="password" name="valor" required
+             placeholder="postgresql://usuario:contraseña@host:puerto/base">
+    </label>
+    <button type="submit" class="menudo" data-lento>Cambiar</button>
+  </form>
+  {% endfor %}
+</section>
+
+<section class="bloque">
+  <h2>Claves de los servicios externos</h2>
+  <p class="nota" style="margin-top:0">
+    Se muestran por sus extremos, nunca completas, y no se registran. Reponer una
+    la sustituye: no hay forma de recuperar la anterior desde aquí.
+  </p>
+  {% for clave, enmascarada in secretos %}
+  <form method="post" action="/configuracion/valor" class="enfila">
+    <input type="hidden" name="clave" value="{{ clave }}">
+    <label style="min-width:250px"><code>{{ clave }}</code>
+      <span class="valor-oculto">{{ enmascarada or '(sin definir)' }}</span>
+    </label>
+    <label style="flex:1; min-width:240px">valor nuevo
+      <input type="password" name="valor" required
+             placeholder="no se mostrará después">
+    </label>
+    <button type="submit" class="menudo" data-lento>Reponer</button>
+  </form>
+  {% endfor %}
+</section>
+
+<section class="bloque">
+  <h2>Restaurar una configuración anterior</h2>
+  {% if copias %}
+  <form method="post" action="/configuracion/restaurar" class="enfila">
+    <label style="flex:1; min-width:300px">copia
+      <select name="ruta" required>
+        {% for c in copias %}
+        <option value="{{ c.ruta }}">{{ c.nombre }} — {{ c.bytes }} bytes</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>escriba <strong>SI</strong>
+      <input type="text" name="confirmacion" required pattern="SI"
+             title="Escriba SI en mayúsculas" style="width:70px">
+    </label>
+    <button type="submit" class="peligro menudo" data-lento>Restaurar</button>
+  </form>
+  <p class="nota">
+    Sustituye <code>config/.env</code> por esa copia. Del actual se hace copia
+    antes, así que la operación es reversible.
+  </p>
+  {% else %}
+  <p class="vacio">Todavía no hay copias.</p>
+  {% endif %}
+</section>
+
+{% endif %}
+{% endblock %}

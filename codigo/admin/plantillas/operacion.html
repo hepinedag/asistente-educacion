@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block titulo %}Operación{% endblock %}
+
+{% block contenido %}
+<h1>Operación</h1>
+<p class="entradilla">
+  Los servicios del sistema, su modo de operación y el mantenimiento de sus datos.
+</p>
+
+{% if problemas %}
+<div class="aviso error"><p>{{ problemas|join(' · ') }}</p></div>
+{% endif %}
+
+<section class="bloque">
+  <h2>Modo de operación</h2>
+  {% if modo.activo %}
+  <p><strong class="verde">Modo {{ modo.activo|upper }}</strong> —
+    modelo de lenguaje <code>{{ modo.modelo_llm }}</code>,
+    embeddings <code>{{ modo.modelo_embeddings }}</code>.</p>
+  {% else %}
+  <p><strong class="rojo">La configuración dice modo {{ modo.escrito|upper }}, pero no está corriendo así.</strong></p>
+  <ul class="detalle">
+    {% for p in modo.pendientes %}<li>{{ p }}</li>{% endfor %}
+  </ul>
+  <form method="post" action="/operacion/aplicar" class="enfila">
+    <button type="submit" data-lento
+            data-espera="Aplicando la configuración: servicios y servidor de embeddings…">
+      Aplicar la configuración
+    </button>
+  </form>
+  {% endif %}
+
+  <form method="post" action="/operacion/modo" style="margin-top:14px">
+    <div class="campos">
+      <label>Cambiar a
+        <select name="modo" required>
+          <option value="local" {{ 'selected' if modo.escrito != 'local' }}>modo local — sin servicios externos</option>
+          <option value="nube" {{ 'selected' if modo.escrito == 'local' }}>modo nube — Claude y Cohere</option>
+        </select>
+      </label>
+      <label>Modelo local (solo para modo local)
+        <select name="modelo_local">
+          {% for m in instalados %}
+          <option value="{{ m }}" {{ 'selected' if m == modelo_local }}>{{ m }}</option>
+          {% else %}
+          <option value="">— Ollama no responde —</option>
+          {% endfor %}
+        </select>
+      </label>
+      <fieldset style="border:0; padding:0; margin:0">
+        <legend>Entornos que reindexar</legend>
+        {% for e in entornos %}
+        <label class="enlinea">
+          <input type="checkbox" name="entornos_elegidos" value="{{ e.id }}" {{ 'checked' if e.documentos }}>
+          {{ e.nombre }} — {{ e.documentos }} documentos
+        </label>
+        {% else %}
+        <p class="vacio">No hay entornos, o no se pudo consultar la base.</p>
+        {% endfor %}
+      </fieldset>
+      <label>Correo de una cuenta docente o administradora
+        <input type="email" name="correo" required>
+      </label>
+      <label>Contraseña de esa cuenta
+        <input type="password" name="password" required>
+      </label>
+      <label>Escriba <strong>SI</strong> para confirmar
+        <input type="text" name="confirmacion" required pattern="SI"
+               title="Escriba SI en mayúsculas">
+      </label>
+    </div>
+    <div class="pie">
+      <button type="submit" class="peligro" data-lento
+              data-espera="Cambiando de modo: copias, servicios, embeddings y reindexación. Tarda varios minutos…">
+        Cambiar de modo
+      </button>
+    </div>
+  </form>
+  <p class="nota">
+    Hace todo en una sola operación. Antes de tocar nada comprueba Docker, Ollama y
+    el modelo, las claves del modo nube y las credenciales, y si falta algo no
+    toca nada. Después copia la base y el índice, cambia la configuración, recrea
+    los servicios, libera la memoria del modelo local que ya no se usa, reinicia
+    el servidor de embeddings, reindexa los entornos marcados y comprueba que cada
+    índice queda con la dimensión del modelo nuevo. Si un paso falla, se detiene
+    ahí y lo dice; las copias quedan en <code>codigo/admin/respaldos/</code>.
+  </p>
+</section>
+
+<section class="bloque">
+  <h2>Contenedores</h2>
+  <div class="fichas">
+    {% for f in fichas %}
+    <div class="ficha">
+      <code>{{ f.nombre }}</code>
+      <span class="{{ 'verde' if 'running' in f.estado|lower else 'rojo' }}">{{ f.estado }}</span>
+      <div class="botones">
+        {% for accion, texto in (('up', 'Arrancar'), ('restart', 'Reiniciar'), ('stop', 'Detener')) %}
+        <form method="post" action="/operacion/servicios" class="enlinea">
+          <input type="hidden" name="accion" value="{{ accion }}">
+          <input type="hidden" name="servicio" value="{{ f.nombre }}">
+          <button type="submit" class="menudo secundario" data-lento>{{ texto }}</button>
+        </form>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="acciones" style="margin-top:14px">
+    {% for accion, texto in (('up', 'Arrancar todos'), ('restart', 'Reiniciar todos'), ('stop', 'Detener todos')) %}
+    <form method="post" action="/operacion/servicios" class="enlinea">
+      <input type="hidden" name="accion" value="{{ accion }}">
+      <button type="submit" class="{{ 'peligro' if accion == 'stop' }}" data-lento>{{ texto }}</button>
+    </form>
+    {% endfor %}
+    <form method="post" action="/operacion/aplicar" class="enlinea">
+      <button type="submit" data-lento
+              data-espera="Aplicando la configuración: servicios y servidor de embeddings…">Aplicar la configuración</button>
+    </form>
+  </div>
+  <p class="nota">
+    Reiniciar no aplica un cambio de configuración: el backend la recibe al
+    crearse el contenedor. Para eso está «Aplicar la configuración», que además
+    alcanza al servidor de embeddings.
+  </p>
+</section>
+
+<section class="bloque">
+  <h2>Salud del sistema</h2>
+  <table class="compacta">
+    <tbody>
+    {% for ruta, codigo, cuerpo in salud %}
+      <tr>
+        <td><code>{{ ruta }}</code></td>
+        <td class="{{ 'verde' if codigo == 200 else 'rojo' }}">
+          {{ codigo if codigo else 'sin respuesta' }}
+        </td>
+        <td class="menudo">{{ cuerpo }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <form method="post" action="/operacion/embeddings" class="enfila" style="margin-top:10px">
+    <button type="submit" class="secundario menudo" data-lento
+            data-espera="Reiniciando el servidor de embeddings…">Reiniciar el servidor de embeddings</button>
+    <span class="nota" style="margin:0">
+      No es un contenedor: corre en su propia ventana. Se cierra y se vuelve a abrir
+      como lo hace <code>iniciar_sistema.bat</code>.
+    </span>
+  </form>
+</section>
+
+<section class="bloque">
+  <h2>Copia de seguridad de la base</h2>
+  <form method="post" action="/operacion/copia" class="enfila">
+    <button type="submit" data-lento>Hacer una copia ahora</button>
+    <span class="nota" style="margin:0">
+      Volcado con <code>pg_dump</code>, en <code>codigo/admin/respaldos/</code>.
+    </span>
+  </form>
+</section>
+
+<section class="bloque peligrosa">
+  <h2>Reindexar el corpus de un entorno</h2>
+  <p class="advertencia">
+    <strong>Destructivo sobre el índice.</strong> Borra los documentos indexados
+    de ese entorno y los vuelve a cargar. Hasta que termine, ese entorno responde
+    con un índice incompleto.
+  </p>
+  {% if entornos %}
+  <form method="post" action="/operacion/reindexar">
+    <div class="campos">
+      <label>Entorno
+        <select name="entorno" required>
+          <option value="">— elija un entorno —</option>
+          {% for e in entornos %}
+          <option value="{{ e.id }}">{{ e.nombre }} — {{ e.documentos }} documentos</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Correo de una cuenta docente o administradora
+        <input type="email" name="correo" required>
+      </label>
+      <label>Contraseña de esa cuenta
+        <input type="password" name="password" required>
+      </label>
+      <label>Escriba <strong>SI</strong> para confirmar
+        <input type="text" name="confirmacion" required pattern="SI"
+               title="Escriba SI en mayúsculas">
+      </label>
+    </div>
+    <div class="pie">
+      <button type="submit" class="peligro" data-lento
+              data-espera="Reindexando: puede tardar varios minutos…">
+        Reindexar
+      </button>
+    </div>
+  </form>
+  <p class="nota">
+    Pide credenciales porque la carga se hace contra la API del sistema, como la
+    haría el docente desde su panel.
+  </p>
+  {% else %}
+  <p class="vacio">No hay entornos, o no se pudo consultar la base.</p>
+  {% endif %}
+</section>
+
+<section class="bloque peligrosa">
+  <h2>Restaurar la base desde una copia</h2>
+  <p class="advertencia">
+    <strong>Destructivo.</strong> Sustituye el contenido actual de la base. Antes
+    se hace una copia automática de lo que hay, así que es reversible.
+  </p>
+  {% if volcados %}
+  <form method="post" action="/operacion/restaurar" class="enfila">
+    <label style="flex:1; min-width:320px">copia
+      <select name="ruta" required>
+        {% for v in volcados %}
+        <option value="{{ v.ruta }}">{{ v.nombre }} — {{ v.bytes }} bytes</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>escriba <strong>SI</strong>
+      <input type="text" name="confirmacion" required pattern="SI"
+             title="Escriba SI en mayúsculas" style="width:70px">
+    </label>
+    <button type="submit" class="peligro menudo" data-lento
+            data-espera="Restaurando la base…">Restaurar</button>
+  </form>
+  {% else %}
+  <p class="vacio">Todavía no hay copias de la base.</p>
+  {% endif %}
+</section>
+{% endblock %}

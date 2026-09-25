@@ -1,0 +1,9 @@
+pdfplumber>=0.11
+python-docx>=1.1
+sentence-transformers>=3.0
+chromadb>=0.5
+cohere>=5.0
+
+# Para correr embedding_server.py (servicio local de embeddings, fuera de Docker)
+fastapi>=0.115
+uvicorn[standard]>=0.32

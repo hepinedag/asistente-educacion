@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: asistente_postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-asistente_educacion}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: asistente_chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      # La imagen persiste en /data -- lo declara su propio /config.yaml
+      # (persist_path: "/data"). Montarlo en otra ruta, como /chroma/chroma,
+      # dejaria el volumen vacio y el indice en la capa efimera del contenedor:
+      # recrear chromadb borraria el corpus indexado sin aviso.
+      - chromadb_data:/data
+
+  fastapi:
+    build:
+      context: ../codigo
+      dockerfile: backend/Dockerfile
+    container_name: asistente_fastapi
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-asistente_educacion}
+      CHROMA_HOST: chromadb
+      CHROMA_PORT: 8000
+      OLLAMA_HOST: http://host.docker.internal:11434
+      EMBEDDING_SERVICE_URL: http://host.docker.internal:8500
+      CORPUS_DIR: /app/corpus/fuente
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    volumes:
+      - ../codigo/backend/app:/app/app
+      - ../codigo/pipeline:/app/pipeline
+      - ../corpus:/app/corpus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  postgres_data:
+  chromadb_data:

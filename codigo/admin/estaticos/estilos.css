@@ -1,0 +1,292 @@
+/* Módulo de administración — hoja única.
+   Sin dependencias ni CDN: el módulo funciona con la máquina desconectada. */
+
+:root {
+  --tinta:      #1b2128;
+  --tinta-flo:  #5c6b7a;
+  --fondo:      #f4f6f8;
+  --papel:      #ffffff;
+  --linea:      #dde3e9;
+  --acento:     #1f5f8b;
+  --acento-flo: #2b7bb0;
+  --verde:      #1f7a4d;
+  --verde-flo:  #e8f5ee;
+  --rojo:       #a32b2b;
+  --rojo-flo:   #fbeceb;
+  --ambar-flo:  #fdf6e3;
+  --ambar:      #8a6d1f;
+  --barra:      #1d2b36;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font: 15px/1.55 "Segoe UI", system-ui, -apple-system, sans-serif;
+  color: var(--tinta);
+  background: var(--fondo);
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ------------------------------------------------------------ barra lateral */
+
+.barra {
+  width: 210px;
+  flex: 0 0 210px;
+  background: var(--barra);
+  color: #c9d6e2;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+}
+
+.marca { padding: 20px 18px 16px; border-bottom: 1px solid #2c3d4b; }
+.marca strong { display: block; color: #fff; font-size: 16px; }
+.marca span { font-size: 12px; color: #8ba0b3; }
+
+.destinos { list-style: none; margin: 10px 0 0; padding: 0; flex: 1; }
+.destinos a, .destinos .pendiente {
+  display: block;
+  padding: 9px 18px;
+  color: #c9d6e2;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+.destinos a:hover { background: #24343f; color: #fff; }
+.destinos a.aqui {
+  background: #24343f;
+  color: #fff;
+  border-left-color: var(--acento-flo);
+  font-weight: 600;
+}
+.destinos .pendiente { color: #5d7183; cursor: default; }
+
+.semaforos { padding: 14px 18px 18px; border-top: 1px solid #2c3d4b; font-size: 12.5px; }
+.luz { display: flex; align-items: center; gap: 8px; padding: 3px 0; color: #a9bccd; }
+.punto { width: 8px; height: 8px; border-radius: 50%; background: #64798a; }
+.luz.bien .punto { background: #3fbe7d; }
+.luz.mal  .punto { background: #e05c5c; }
+.salir {
+  margin-top: 12px; width: 100%;
+  background: none; border: 1px solid #3a4d5d; color: #a9bccd;
+  padding: 6px; border-radius: 4px; cursor: pointer; font-size: 12.5px;
+}
+.salir:hover { background: #24343f; color: #fff; }
+
+/* ---------------------------------------------------------- área de trabajo */
+
+.trabajo { flex: 1; padding: 28px 34px 60px; max-width: 1180px; }
+
+h1 { font-size: 23px; margin: 0 0 4px; font-weight: 600; }
+h2 { font-size: 16px; margin: 0 0 12px; font-weight: 600; }
+.entradilla { color: var(--tinta-flo); margin: 0 0 22px; }
+.vacio { color: var(--tinta-flo); font-style: italic; }
+.nota { font-size: 13px; color: var(--tinta-flo); margin: 10px 0 0; }
+.menudo { font-size: 12.5px; }
+.numero, .derecha { text-align: right; }
+.verde { color: var(--verde); font-weight: 600; }
+.rojo  { color: var(--rojo);  font-weight: 600; }
+code { font-family: Consolas, "Courier New", monospace; font-size: .9em; }
+
+/* ------------------------------------------------------------------ avisos */
+
+.aviso {
+  padding: 13px 16px; border-radius: 6px; margin-bottom: 20px;
+  border: 1px solid var(--linea); background: var(--papel);
+}
+.aviso p { margin: 0; }
+.aviso.ok    { background: var(--verde-flo); border-color: #b6ddc6; }
+.aviso.error { background: var(--rojo-flo);  border-color: #eec4c1; }
+.aviso.clave { background: var(--ambar-flo); border-color: #e6d9a8; }
+.aviso .detalle { margin: 8px 0 0 18px; padding: 0; font-size: 13.5px; }
+
+.credencial {
+  margin-top: 10px; padding: 10px 12px;
+  background: var(--papel); border: 1px dashed #d0b978; border-radius: 5px;
+}
+.credencial .etiqueta {
+  display: block; font-size: 11.5px; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--ambar); margin-bottom: 4px;
+}
+.credencial code { font-size: 17px; letter-spacing: .06em; user-select: all; }
+
+/* ---------------------------------------------------------------- controles */
+
+button, .limpia {
+  font: inherit; font-size: 14px;
+  padding: 7px 14px; border-radius: 5px; cursor: pointer;
+  border: 1px solid var(--acento); background: var(--acento); color: #fff;
+}
+button:hover { background: var(--acento-flo); border-color: var(--acento-flo); }
+button.secundario, .limpia {
+  background: var(--papel); color: var(--acento); border-color: #c2d2dd;
+  text-decoration: none;
+}
+button.secundario:hover, .limpia:hover { background: #eef4f8; }
+button.menudo { padding: 4px 9px; font-size: 12.5px; }
+
+.acciones { display: flex; gap: 10px; margin-bottom: 18px; }
+
+input[type=text], input[type=email], input[type=password],
+input[type=search], input[type=file], select {
+  font: inherit; font-size: 14px;
+  padding: 7px 9px; border: 1px solid #c6d0d9; border-radius: 5px;
+  background: var(--papel); width: 100%;
+}
+input:focus, select:focus { outline: 2px solid #bcd6e8; border-color: var(--acento); }
+
+/* Cualquier regla de este archivo que fije `display` le gana a la del
+   navegador para [hidden], porque la hoja del autor manda sobre la suya: con
+   `label { display: block }`, un elemento con el atributo hidden seguiria
+   visible -y utilizable-. Esta linea lo zanja para todo el modulo, en vez de
+   ir caso por caso. */
+[hidden] { display: none !important; }
+
+label { display: block; font-size: 13px; color: var(--tinta-flo); }
+label input, label select { margin-top: 3px; }
+label.casilla { display: flex; align-items: center; gap: 6px; }
+label.casilla input { width: auto; margin: 0; }
+
+/* ------------------------------------------------------------------ paneles */
+
+.panel {
+  background: var(--papel); border: 1px solid var(--linea);
+  border-radius: 7px; padding: 18px 20px; margin-bottom: 22px;
+}
+.campos {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 13px;
+}
+.campos .ancho { grid-column: 1 / -1; }
+.pie { display: flex; gap: 9px; margin-top: 16px; }
+
+.panel-fila td { background: #f7fafc; }
+.enfila {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 11px;
+  padding: 4px 0;
+}
+.enfila select { min-width: 165px; }
+.enlinea { display: inline; }
+
+.filtro { display: flex; gap: 9px; margin-bottom: 16px; align-items: center; }
+.filtro input[type=search] { max-width: 320px; }
+.filtro select { max-width: 190px; }
+
+/* ------------------------------------------------------------------ tablas */
+
+table { border-collapse: collapse; width: 100%; background: var(--papel); }
+.listado { border: 1px solid var(--linea); border-radius: 7px; overflow: hidden; }
+.listado th {
+  text-align: left; font-size: 12.5px; text-transform: uppercase;
+  letter-spacing: .04em; color: var(--tinta-flo);
+  background: #eef2f6; padding: 9px 12px; border-bottom: 1px solid var(--linea);
+}
+.listado td { padding: 9px 12px; border-bottom: 1px solid #eef2f5; vertical-align: middle; }
+.listado tbody tr:last-child td { border-bottom: none; }
+
+.compacta td { padding: 5px 9px; border-bottom: 1px solid #eef2f5; }
+.compacta td:first-child { width: 1%; white-space: nowrap; }
+
+.rol {
+  font-size: 11.5px; padding: 2px 8px; border-radius: 10px;
+  background: #eef2f6; color: var(--tinta-flo);
+}
+.rol.teacher { background: #e5f0f8; color: #1d5a85; }
+.rol.admin   { background: #f6e9f2; color: #7b3060; }
+.rol.student { background: #eaf4ec; color: #256c45; }
+
+.identificador { font-size: 11.5px; color: var(--tinta-flo); }
+
+/* ------------------------------------------------------------------ inicio */
+
+.cifras { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 22px; }
+.cifra {
+  background: var(--papel); border: 1px solid var(--linea); border-radius: 7px;
+  padding: 13px 20px; min-width: 118px;
+}
+.cifra b { display: block; font-size: 25px; font-weight: 600; }
+.cifra span { font-size: 12.5px; color: var(--tinta-flo); }
+
+.columnas { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 18px; }
+.bloque {
+  background: var(--papel); border: 1px solid var(--linea);
+  border-radius: 7px; padding: 17px 19px; margin-bottom: 18px;
+}
+
+/* ------------------------------------------------------------------ entrada */
+
+.pagina-entrada { display: flex; align-items: center; justify-content: center; }
+.entrada {
+  background: var(--papel); border: 1px solid var(--linea); border-radius: 9px;
+  padding: 34px 36px; width: 400px; box-shadow: 0 2px 14px rgba(27, 33, 40, .07);
+}
+.entrada h1 { margin: 0; }
+.entrada .bajo { margin: 0 0 22px; color: var(--tinta-flo); font-size: 13.5px; }
+.entrada label { margin-bottom: 14px; }
+.entrada button { width: 100%; padding: 9px; }
+.entrada .explica {
+  font-size: 13.5px; color: var(--tinta-flo);
+  background: var(--fondo); padding: 11px 13px; border-radius: 5px;
+  margin-bottom: 18px;
+}
+.entrada .error {
+  background: var(--rojo-flo); border: 1px solid #eec4c1; color: var(--rojo);
+  padding: 9px 12px; border-radius: 5px; margin: 0 0 16px; font-size: 14px;
+}
+.entrada .nota { text-align: center; margin-top: 18px; }
+
+@media (max-width: 760px) {
+  body { flex-direction: column; }
+  .barra { width: 100%; flex: none; height: auto; position: static; }
+  .destinos { display: flex; flex-wrap: wrap; }
+  .trabajo { padding: 20px 16px 40px; }
+}
+
+/* --------------------------------------------------- sesión 2: Configuración,
+   Operación y Registro. Lo destructivo se ve distinto ANTES de pulsarlo. */
+
+button.peligro { background: var(--rojo); border-color: var(--rojo); }
+button.peligro:hover { background: #bf3636; border-color: #bf3636; }
+
+.bloque.peligrosa { border-color: #e8c9c6; background: #fffbfb; }
+.advertencia {
+  background: var(--rojo-flo); border: 1px solid #eec4c1;
+  padding: 9px 12px; border-radius: 5px; margin: 0 0 14px; font-size: 13.5px;
+}
+
+.valor-oculto {
+  display: inline-block; margin-top: 3px; padding: 7px 9px;
+  background: var(--fondo); border: 1px solid var(--linea); border-radius: 5px;
+  font-family: Consolas, "Courier New", monospace; font-size: 12.5px;
+  color: var(--tinta-flo);
+}
+
+.aviso-inline { color: var(--ambar); align-self: center; }
+
+.encadenada { margin-top: 12px; }
+
+.fichas { display: flex; flex-wrap: wrap; gap: 12px; }
+.ficha {
+  border: 1px solid var(--linea); border-radius: 7px; padding: 12px 15px;
+  min-width: 190px; background: var(--fondo);
+}
+.ficha code { display: block; font-size: 13.5px; margin-bottom: 2px; }
+.ficha .botones { display: flex; gap: 5px; margin-top: 9px; }
+
+.detalle-registro .par { display: inline-block; margin-right: 12px; }
+.detalle-registro .par b { color: var(--tinta-flo); font-weight: 600; }
+
+/* Mientras una operación larga corre, el botón lo dice y no admite un segundo
+   clic: reindexar y restaurar tardan minutos y el silencio se lee como cuelgue. */
+button.trabajando { opacity: .75; cursor: progress; }
+.velo {
+  position: fixed; inset: 0; background: rgba(27, 33, 40, .35);
+  display: flex; align-items: center; justify-content: center; z-index: 50;
+}
+.velo div {
+  background: var(--papel); padding: 20px 26px; border-radius: 8px;
+  box-shadow: 0 4px 22px rgba(0, 0, 0, .2); font-size: 15px;
+}

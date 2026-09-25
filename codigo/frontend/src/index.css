@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Impresion y descarga en PDF de un artefacto.
+   El PDF lo fabrica el navegador: no hay dependencia nueva ni carga en el
+   servidor, y el texto sale seleccionable en vez de rasterizado. Lo unico que
+   hace falta es apagar la cascara de la aplicacion y dejar el documento.
+   Se usa display:none y no visibility:hidden a proposito: lo oculto con
+   visibility sigue ocupando su sitio y produce paginas en blanco. */
+@media print {
+  @page {
+    margin: 18mm 16mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  .no-imprimir {
+    display: none !important;
+  }
+
+  /* La caja del visor pierde marco y relleno: en papel el marco es el papel. */
+  .zona-imprimible {
+    border: 0 !important;
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  /* Un encabezado al final de la pagina, con su contenido en la siguiente, es
+     el defecto tipico de imprimir HTML sin preparar. */
+  h1,
+  h2,
+  h3,
+  h4 {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  /* Una tarjeta partida entre dos paginas no se puede recortar ni estudiar. */
+  .tarjeta {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  table,
+  li,
+  blockquote {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Los enlaces no se pueden pulsar en papel: se imprime su destino. */
+  a[href^='http']::after {
+    content: ' (' attr(href) ')';
+    font-size: 0.85em;
+    word-break: break-all;
+  }
+}

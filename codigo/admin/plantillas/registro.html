@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block titulo %}Registro{% endblock %}
+
+{% block contenido %}
+<h1>Registro</h1>
+<p class="entradilla">
+  Lo que el módulo ha hecho y cuándo. Vive en <code>codigo/admin/operaciones.jsonl</code>,
+  dentro del propio módulo: borrarlo no deja residuos en el sistema.
+  <strong>Las contraseñas no entran aquí</strong> — se registra que se generó una, no cuál.
+</p>
+
+<form class="filtro" method="get" action="/registro">
+  <input type="search" name="q" value="{{ q }}"
+         placeholder="Buscar por acción, detalle o fecha"
+         list="acciones-conocidas">
+  <datalist id="acciones-conocidas">
+    {% for a in acciones %}<option value="{{ a }}">{% endfor %}
+  </datalist>
+  <button type="submit" class="secundario">Filtrar</button>
+  {% if q %}<a class="limpia" href="/registro">Quitar filtro</a>{% endif %}
+</form>
+
+{% if lineas %}
+<table class="listado">
+  <thead>
+    <tr><th>Cuándo</th><th>Acción</th><th>Detalle</th><th>Resultado</th></tr>
+  </thead>
+  <tbody>
+  {% for l in lineas %}
+    <tr>
+      <td class="menudo">{{ l.fecha.replace('T', ' ') }}</td>
+      <td><code>{{ l.accion }}</code></td>
+      <td class="menudo detalle-registro">
+        {% if l.detalle %}
+          {% for k, v in l.detalle.items() %}
+          <span class="par"><b>{{ k }}</b> {{ v }}</span>
+          {% endfor %}
+        {% else %}—{% endif %}
+      </td>
+      <td class="{{ 'verde' if l.resultado == 'ok' else 'rojo' }}">{{ l.resultado }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="nota">
+  {{ lineas|length }} operación{{ 'es' if lineas|length != 1 }}{% if q %} de {{ total }} leídas{% endif %}.
+</p>
+{% else %}
+<p class="vacio">
+  {% if q %}Ninguna operación coincide con «{{ q }}».{% else %}Todavía no hay operaciones registradas.{% endif %}
+</p>
+{% endif %}
+{% endblock %}

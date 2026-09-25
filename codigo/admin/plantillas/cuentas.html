@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block titulo %}Cuentas{% endblock %}
+
+{% block contenido %}
+<h1>Cuentas</h1>
+<p class="entradilla">
+  El rol lo fija la operación de alta, no la persona que se registra.
+</p>
+
+{% if sin_base %}
+<div class="aviso error">
+  <p><strong>No hay conexión con la base de datos.</strong> Sin ella no se pueden
+  administrar cuentas. Levante los servicios y vuelva a entrar.</p>
+  <ul class="detalle"><li>{{ sin_base }}</li></ul>
+</div>
+{% else %}
+<div class="acciones">
+  <button type="button" class="abre" data-panel="crear">Crear cuenta</button>
+  <button type="button" class="abre secundario" data-panel="lista">Alta por lista</button>
+</div>
+
+<!-- ---------------------------------------------------------- crear cuenta -->
+<form class="panel" id="crear" method="post" action="/cuentas/crear" hidden>
+  <h2>Crear cuenta</h2>
+  <div class="campos">
+    <label>Correo
+      <input type="email" name="correo" required placeholder="nombre@dominio.edu">
+    </label>
+    <label>Nombre completo
+      <input type="text" name="nombre" required>
+    </label>
+    <label>Rol
+      <select name="rol" id="rol-nuevo">
+        {% for valor, texto in roles %}<option value="{{ valor }}">{{ texto }}</option>{% endfor %}
+      </select>
+    </label>
+    <label id="entorno-nuevo" hidden>Entorno
+      <select name="entorno">
+        <option value="">— elija un entorno —</option>
+        {% for e in entornos %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Contraseña (opcional)
+      <input type="text" name="password" minlength="8"
+             placeholder="vacío: la genera el módulo">
+    </label>
+  </div>
+  <p class="nota">
+    Si deja la contraseña vacía, el módulo la genera y la muestra una sola vez.
+    Si la escribe usted, mínimo 8 caracteres y sin espacios al principio ni al
+    final. Un estudiante necesita entorno: sin él no ve ningún corpus.
+  </p>
+  <div class="pie">
+    <button type="submit">Crear</button>
+    <button type="button" class="cierra secundario">Cancelar</button>
+  </div>
+</form>
+
+<!-- ----------------------------------------------------------- alta por lista -->
+<form class="panel" id="lista" method="post" action="/cuentas/alta-lista"
+      enctype="multipart/form-data" hidden>
+  <h2>Alta de estudiantes por lista</h2>
+  <div class="campos">
+    <label>Entorno
+      <select name="entorno" required>
+        <option value="">— elija un entorno —</option>
+        {% for e in entornos %}<option value="{{ e.id }}">{{ e.nombre }}</option>{% endfor %}
+      </select>
+    </label>
+    <label>Archivo
+      <input type="file" name="archivo" accept=".csv,.txt" required>
+    </label>
+  </div>
+  <p class="nota">
+    Columnas <code>correo</code> y <code>nombre</code>. Una fila con problema no
+    aborta el lote: se informa y se sigue. Las credenciales generadas se
+    exportan a un archivo que lleva las contraseñas en claro.
+  </p>
+  <div class="pie">
+    <button type="submit">Dar de alta</button>
+    <button type="button" class="cierra secundario">Cancelar</button>
+  </div>
+</form>
+
+<!-- ------------------------------------------------------------------ tabla -->
+<form class="filtro" method="get" action="/cuentas">
+  <input type="search" name="q" value="{{ q }}" placeholder="Buscar por correo o nombre">
+  <select name="rol">
+    <option value="">Todos los roles</option>
+    {% for valor, texto in roles %}
+    <option value="{{ valor }}" {{ 'selected' if rol == valor }}>{{ texto }}</option>
+    {% endfor %}
+  </select>
+  <button type="submit" class="secundario">Filtrar</button>
+  {% if q or rol %}<a class="limpia" href="/cuentas">Quitar filtros</a>{% endif %}
+</form>
+
+{% if filas %}
+<table class="listado">
+  <thead>
+    <tr><th>Correo</th><th>Rol</th><th>Nombre</th><th>Entorno</th><th></th></tr>
+  </thead>
+  <tbody>
+  {% for f in filas %}
+    <tr>
+      <td>{{ f.email }}</td>
+      <td><span class="rol {{ f.rol }}">{{ f.rol }}</span></td>
+      <td>{{ f.nombre }}</td>
+      <td>{{ f.entorno or '—' }}</td>
+      <td class="derecha">
+        <button type="button" class="menudo abre" data-panel="cambiar-{{ f.id }}">Cambiar</button>
+        <form method="post" action="/cuentas/clave" class="enlinea">
+          <input type="hidden" name="user_id" value="{{ f.id }}">
+          <input type="text" name="password" size="16" minlength="8"
+                 placeholder="opcional" aria-label="Contraseña para {{ f.email }}">
+          <button type="submit" class="menudo secundario">Nueva contraseña</button>
+        </form>
+      </td>
+    </tr>
+    <tr class="panel-fila" id="cambiar-{{ f.id }}" hidden>
+      <td colspan="5">
+        <form method="post" action="/cuentas/cambiar" class="enfila">
+          <input type="hidden" name="user_id" value="{{ f.id }}">
+          <span>Cambiar <strong>{{ f.email }}</strong>:</span>
+          <label>rol
+            <select name="rol">
+              <option value="">no cambiar</option>
+              {% for valor, texto in roles %}
+              <option value="{{ valor }}" {{ 'selected' if f.rol == valor }}>{{ texto }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <label>entorno
+            <select name="entorno">
+              <option value="">no cambiar</option>
+              {% for e in entornos %}
+              <option value="{{ e.id }}" {{ 'selected' if f.entorno_id == e.id }}>{{ e.nombre }}</option>
+              {% endfor %}
+            </select>
+          </label>
+          <button type="submit" class="menudo">Aplicar</button>
+          <button type="button" class="menudo secundario cierra">Cancelar</button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<p class="nota">{{ filas|length }} cuenta{{ 's' if filas|length != 1 }}. Un cambio de rol o de entorno surte efecto en la siguiente petición del usuario.</p>
+{% else %}
+<p class="vacio">No hay cuentas que coincidan.</p>
+{% endif %}
+{% endif %}
+{% endblock %}

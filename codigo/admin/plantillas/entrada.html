@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Entrar · Administración</title>
+<link rel="stylesheet" href="/estaticos/estilos.css">
+</head>
+<body class="pagina-entrada">
+
+<form class="entrada" method="post" action="/entrada">
+  <h1>Administración</h1>
+  <p class="bajo">Asistente de Educación</p>
+
+  {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+  {% if primera_vez %}
+    <p class="explica">
+      Es el primer arranque: fije la contraseña del módulo. Se le pedirá a partir
+      de ahora. No viene con ningún valor inicial y no queda escrita en el
+      repositorio — si se pierde, se borra <code>codigo/admin/.acceso</code> y se
+      vuelve a fijar desde esta misma pantalla.
+    </p>
+    <label>Contraseña nueva
+      <input type="password" name="password" autofocus required minlength="8">
+    </label>
+    <label>Repítala
+      <input type="password" name="repeticion" required minlength="8">
+    </label>
+    <button type="submit">Fijar y entrar</button>
+  {% else %}
+    <label>Contraseña del módulo
+      <input type="password" name="password" autofocus required>
+    </label>
+    <button type="submit">Entrar</button>
+  {% endif %}
+
+  <p class="nota">
+    El módulo escucha solo en esta máquina. No es alcanzable desde la red.
+  </p>
+</form>
+
+</body>
+</html>
